@@ -1,0 +1,437 @@
+import type {
+  TemperatureZone,
+  TenantContract,
+  Reservation,
+  TemperatureRecord,
+  TemperatureAlert,
+  OutboundNote,
+} from '@/types';
+
+const now = new Date();
+
+export const mockZones: TemperatureZone[] = [
+  {
+    id: 'zone-1',
+    name: 'A区 - 恒温冷藏',
+    minTemp: 2,
+    maxTemp: 8,
+    currentTemp: 4.5,
+    totalPallets: 200,
+    usedPallets: 156,
+    minLeaseDays: 7,
+    dailyRate: 15,
+    status: 'normal',
+    description: '标准冷藏区，适合果蔬、乳制品储存',
+  },
+  {
+    id: 'zone-2',
+    name: 'B区 - 冷冻区',
+    minTemp: -25,
+    maxTemp: -18,
+    currentTemp: -21.3,
+    totalPallets: 150,
+    usedPallets: 98,
+    minLeaseDays: 15,
+    dailyRate: 25,
+    status: 'normal',
+    description: '深度冷冻区，适合肉类、海鲜长期储存',
+  },
+  {
+    id: 'zone-3',
+    name: 'C区 - 超低温区',
+    minTemp: -60,
+    maxTemp: -45,
+    currentTemp: -52.8,
+    totalPallets: 80,
+    usedPallets: 45,
+    minLeaseDays: 30,
+    dailyRate: 80,
+    status: 'warning',
+    description: '超低温冷冻，适合生物制品、特种材料',
+  },
+  {
+    id: 'zone-4',
+    name: 'D区 - 恒温保鲜',
+    minTemp: 0,
+    maxTemp: 4,
+    currentTemp: 2.1,
+    totalPallets: 120,
+    usedPallets: 120,
+    minLeaseDays: 3,
+    dailyRate: 12,
+    status: 'alert',
+    description: '高精度恒温区，适合生鲜、医药',
+  },
+  {
+    id: 'zone-5',
+    name: 'E区 - 变温区',
+    minTemp: -10,
+    maxTemp: 5,
+    currentTemp: -3.5,
+    totalPallets: 100,
+    usedPallets: 67,
+    minLeaseDays: 5,
+    dailyRate: 20,
+    status: 'normal',
+    description: '可调节温区，灵活应对不同需求',
+  },
+  {
+    id: 'zone-6',
+    name: 'F区 - 冰温区',
+    minTemp: -2,
+    maxTemp: 1,
+    currentTemp: -0.8,
+    totalPallets: 90,
+    usedPallets: 72,
+    minLeaseDays: 10,
+    dailyRate: 35,
+    status: 'normal',
+    description: '冰温储存区，适合高档生鲜保鲜',
+  },
+];
+
+export const mockContracts: TenantContract[] = [
+  {
+    id: 'contract-1',
+    zoneId: 'zone-1',
+    tenantName: '鲜达物流有限公司',
+    contactInfo: '13800138001',
+    contactPerson: '张经理',
+    startDate: '2025-01-01',
+    endDate: '2026-12-31',
+    leasedPallets: 80,
+    status: 'active',
+  },
+  {
+    id: 'contract-2',
+    zoneId: 'zone-1',
+    tenantName: '绿源果蔬合作社',
+    contactInfo: '13900139002',
+    contactPerson: '李主任',
+    startDate: '2025-06-01',
+    endDate: '2026-05-31',
+    leasedPallets: 50,
+    status: 'active',
+  },
+  {
+    id: 'contract-3',
+    zoneId: 'zone-2',
+    tenantName: '海味鲜进出口贸易',
+    contactInfo: '13700137003',
+    contactPerson: '王总',
+    startDate: '2025-03-15',
+    endDate: '2026-03-14',
+    leasedPallets: 60,
+    status: 'active',
+  },
+  {
+    id: 'contract-4',
+    zoneId: 'zone-2',
+    tenantName: '冻品世家供应链',
+    contactInfo: '13600136004',
+    contactPerson: '陈经理',
+    startDate: '2025-09-01',
+    endDate: '2026-08-31',
+    leasedPallets: 38,
+    status: 'active',
+  },
+  {
+    id: 'contract-5',
+    zoneId: 'zone-3',
+    tenantName: '生物科技研究院',
+    contactInfo: '13500135005',
+    contactPerson: '刘博士',
+    startDate: '2025-02-01',
+    endDate: '2026-01-31',
+    leasedPallets: 30,
+    status: 'active',
+  },
+  {
+    id: 'contract-6',
+    zoneId: 'zone-3',
+    tenantName: '医疗试剂公司',
+    contactInfo: '13400134006',
+    contactPerson: '赵经理',
+    startDate: '2025-07-01',
+    endDate: '2026-06-30',
+    leasedPallets: 15,
+    status: 'pending',
+  },
+  {
+    id: 'contract-7',
+    zoneId: 'zone-4',
+    tenantName: '医药连锁集团',
+    contactInfo: '13300133007',
+    contactPerson: '孙总监',
+    startDate: '2025-01-15',
+    endDate: '2026-01-14',
+    leasedPallets: 70,
+    status: 'active',
+  },
+  {
+    id: 'contract-8',
+    zoneId: 'zone-4',
+    tenantName: '鲜品优选电商',
+    contactInfo: '13200132008',
+    contactPerson: '周总',
+    startDate: '2025-04-01',
+    endDate: '2026-03-31',
+    leasedPallets: 50,
+    status: 'active',
+  },
+  {
+    id: 'contract-9',
+    zoneId: 'zone-5',
+    tenantName: '多温层物流',
+    contactInfo: '13100131009',
+    contactPerson: '吴经理',
+    startDate: '2025-05-01',
+    endDate: '2026-04-30',
+    leasedPallets: 45,
+    status: 'active',
+  },
+  {
+    id: 'contract-10',
+    zoneId: 'zone-6',
+    tenantName: '精品生鲜高端店',
+    contactInfo: '13000130010',
+    contactPerson: '郑店长',
+    startDate: '2025-08-01',
+    endDate: '2026-07-31',
+    leasedPallets: 50,
+    status: 'active',
+  },
+  {
+    id: 'contract-11',
+    zoneId: 'zone-6',
+    tenantName: '和食料理供应链',
+    contactInfo: '15800158011',
+    contactPerson: '山本先生',
+    startDate: '2025-10-01',
+    endDate: '2026-09-30',
+    leasedPallets: 22,
+    status: 'active',
+  },
+];
+
+export const mockReservations: Reservation[] = [
+  {
+    id: 'res-1',
+    zoneId: 'zone-1',
+    contractId: 'contract-1',
+    cargoName: '进口车厘子',
+    batchNo: 'CHL-20251201-001',
+    palletCount: 12,
+    inboundDate: '2025-12-01',
+    expectedOutboundDate: '2025-12-20',
+    status: 'in-stock',
+    temperatureAlerts: ['alert-1'],
+  },
+  {
+    id: 'res-2',
+    zoneId: 'zone-1',
+    contractId: 'contract-2',
+    cargoName: '有机蔬菜拼盘',
+    batchNo: 'VEG-20251205-003',
+    palletCount: 8,
+    inboundDate: '2025-12-05',
+    expectedOutboundDate: '2025-12-15',
+    status: 'in-stock',
+  },
+  {
+    id: 'res-3',
+    zoneId: 'zone-2',
+    contractId: 'contract-3',
+    cargoName: '北极甜虾',
+    batchNo: 'SHR-20251120-007',
+    palletCount: 20,
+    inboundDate: '2025-11-20',
+    expectedOutboundDate: '2026-01-20',
+    status: 'in-stock',
+    temperatureAlerts: ['alert-2', 'alert-3'],
+  },
+  {
+    id: 'res-4',
+    zoneId: 'zone-2',
+    contractId: 'contract-4',
+    cargoName: '澳洲和牛',
+    batchNo: 'BEE-20251210-002',
+    palletCount: 15,
+    inboundDate: '2025-12-10',
+    expectedOutboundDate: '2026-02-10',
+    status: 'pending',
+  },
+  {
+    id: 'res-5',
+    zoneId: 'zone-3',
+    contractId: 'contract-5',
+    cargoName: '生物样本试剂',
+    batchNo: 'BIO-20251115-012',
+    palletCount: 6,
+    inboundDate: '2025-11-15',
+    expectedOutboundDate: '2026-05-15',
+    status: 'in-stock',
+  },
+  {
+    id: 'res-6',
+    zoneId: 'zone-4',
+    contractId: 'contract-7',
+    cargoName: '胰岛素注射液',
+    batchNo: 'INS-20251208-005',
+    palletCount: 10,
+    inboundDate: '2025-12-08',
+    expectedOutboundDate: '2026-01-08',
+    status: 'in-stock',
+    temperatureAlerts: ['alert-4'],
+  },
+  {
+    id: 'res-7',
+    zoneId: 'zone-5',
+    contractId: 'contract-9',
+    cargoName: '混合冷冻食品',
+    batchNo: 'MIX-20251203-009',
+    palletCount: 25,
+    inboundDate: '2025-12-03',
+    expectedOutboundDate: '2025-12-28',
+    status: 'in-stock',
+  },
+  {
+    id: 'res-8',
+    zoneId: 'zone-6',
+    contractId: 'contract-10',
+    cargoName: '蓝鳍金枪鱼大腹',
+    batchNo: 'TUN-20251207-001',
+    palletCount: 4,
+    inboundDate: '2025-12-07',
+    expectedOutboundDate: '2025-12-17',
+    status: 'in-stock',
+  },
+  {
+    id: 'res-9',
+    zoneId: 'zone-1',
+    contractId: 'contract-1',
+    cargoName: '新西兰奇异果',
+    batchNo: 'KIW-20251125-004',
+    palletCount: 16,
+    inboundDate: '2025-11-25',
+    expectedOutboundDate: '2025-12-25',
+    status: 'outbound',
+    actualOutboundDate: '2025-12-10',
+  },
+];
+
+function generateTemperatureRecords(
+  zoneId: string,
+  minTemp: number,
+  maxTemp: number,
+  hours: number = 24
+): TemperatureRecord[] {
+  const records: TemperatureRecord[] = [];
+  const centerTemp = (minTemp + maxTemp) / 2;
+  const range = maxTemp - minTemp;
+
+  for (let i = hours; i >= 0; i--) {
+    const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+    const randomVariation = (Math.random() - 0.5) * range * 0.6;
+    const sineVariation = Math.sin((hours - i) / 4) * range * 0.2;
+    let temperature = centerTemp + randomVariation + sineVariation;
+
+    if (zoneId === 'zone-4' && i > 8 && i < 12) {
+      temperature = maxTemp + 1 + Math.random() * 2;
+    }
+    if (zoneId === 'zone-3' && i > 15 && i < 17) {
+      temperature = minTemp - 3 - Math.random() * 2;
+    }
+
+    records.push({
+      id: `rec-${zoneId}-${i}`,
+      zoneId,
+      temperature: Math.round(temperature * 10) / 10,
+      timestamp: time.toISOString(),
+    });
+  }
+
+  return records;
+}
+
+export const mockTemperatureRecords: Record<string, TemperatureRecord[]> = {
+  'zone-1': generateTemperatureRecords('zone-1', 2, 8),
+  'zone-2': generateTemperatureRecords('zone-2', -25, -18),
+  'zone-3': generateTemperatureRecords('zone-3', -60, -45),
+  'zone-4': generateTemperatureRecords('zone-4', 0, 4),
+  'zone-5': generateTemperatureRecords('zone-5', -10, 5),
+  'zone-6': generateTemperatureRecords('zone-6', -2, 1),
+};
+
+export const mockAlerts: TemperatureAlert[] = [
+  {
+    id: 'alert-1',
+    zoneId: 'zone-1',
+    type: 'high',
+    temperature: 9.2,
+    threshold: 8,
+    startTime: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(),
+    duration: 120,
+    affectedBatchNos: ['CHL-20251201-001'],
+  },
+  {
+    id: 'alert-2',
+    zoneId: 'zone-2',
+    type: 'high',
+    temperature: -16.5,
+    threshold: -18,
+    startTime: new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(),
+    duration: 120,
+    affectedBatchNos: ['SHR-20251120-007'],
+  },
+  {
+    id: 'alert-3',
+    zoneId: 'zone-2',
+    type: 'high',
+    temperature: -17.2,
+    threshold: -18,
+    startTime: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
+    duration: 60,
+    affectedBatchNos: ['SHR-20251120-007'],
+  },
+  {
+    id: 'alert-4',
+    zoneId: 'zone-4',
+    type: 'high',
+    temperature: 6.8,
+    threshold: 4,
+    startTime: new Date(now.getTime() - 9 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
+    duration: 240,
+    affectedBatchNos: ['INS-20251208-005'],
+  },
+  {
+    id: 'alert-5',
+    zoneId: 'zone-3',
+    type: 'low',
+    temperature: -63.5,
+    threshold: -60,
+    startTime: new Date(now.getTime() - 7 * 60 * 60 * 1000).toISOString(),
+    endTime: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(),
+    duration: 120,
+  },
+];
+
+export const mockOutboundNotes: OutboundNote[] = [
+  {
+    id: 'note-1',
+    reservationId: 'res-9',
+    content:
+      '该批次货物储存期间温度正常，无异常记录。货物出库时外观完好，包装完整。',
+    alertIds: [],
+    createdDate: '2025-12-10',
+    severity: 'normal',
+  },
+];
+
+export function generateId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}

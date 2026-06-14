@@ -116,11 +116,22 @@ export const useColdStore = create<ColdStoreState>()(
 
       addReservation: (reservation) =>
         set((state) => {
+          const newReservationId = generateId('res');
+
+          const inboundDate = new Date(reservation.inboundDate);
+          const affectedZoneAlerts = state.alerts.filter(
+            (a) =>
+              a.zoneId === reservation.zoneId &&
+              new Date(a.startTime) >= inboundDate
+          );
+
           const newReservation: Reservation = {
             ...reservation,
-            id: generateId('res'),
+            id: newReservationId,
             status: 'pending' as const,
+            temperatureAlerts: affectedZoneAlerts.map((a) => a.id),
           };
+
           const zone = state.zones.find((z) => z.id === reservation.zoneId);
           const updatedZones = zone
             ? state.zones.map((z) =>
@@ -129,9 +140,27 @@ export const useColdStore = create<ColdStoreState>()(
                   : z
               )
             : state.zones;
+
+          const updatedAlerts = state.alerts.map((alert) => {
+            if (
+              alert.zoneId === reservation.zoneId &&
+              new Date(alert.startTime) >= inboundDate
+            ) {
+              const existingBatches = alert.affectedBatchNos || [];
+              if (!existingBatches.includes(reservation.batchNo)) {
+                return {
+                  ...alert,
+                  affectedBatchNos: [...existingBatches, reservation.batchNo],
+                };
+              }
+            }
+            return alert;
+          });
+
           return {
             reservations: [...state.reservations, newReservation],
             zones: updatedZones,
+            alerts: updatedAlerts,
           };
         }),
 
@@ -193,15 +222,50 @@ export const useColdStore = create<ColdStoreState>()(
         }),
 
       addAlert: (alert) =>
-        set((state) => ({
-          alerts: [
+        set((state) => {
+          const newAlertId = generateId('alert');
+          const newAlert = {
+            ...alert,
+            id: newAlertId,
+          };
+
+          const inStockReservations = state.reservations.filter(
+            (r) =>
+              r.zoneId === alert.zoneId &&
+              (r.status === 'in-stock' || r.status === 'pending')
+          );
+
+          const affectedBatchNos = [
+            ...(alert.affectedBatchNos || []),
+            ...inStockReservations.map((r) => r.batchNo),
+          ].filter((v, i, a) => a.indexOf(v) === i);
+
+          const updatedAlerts = [
             ...state.alerts,
-            {
-              ...alert,
-              id: generateId('alert'),
-            },
-          ],
-        })),
+            { ...newAlert, affectedBatchNos },
+          ];
+
+          const updatedReservations = state.reservations.map((r) => {
+            if (
+              r.zoneId === alert.zoneId &&
+              (r.status === 'in-stock' || r.status === 'pending')
+            ) {
+              const existingAlerts = r.temperatureAlerts || [];
+              if (!existingAlerts.includes(newAlertId)) {
+                return {
+                  ...r,
+                  temperatureAlerts: [...existingAlerts, newAlertId],
+                };
+              }
+            }
+            return r;
+          });
+
+          return {
+            alerts: updatedAlerts,
+            reservations: updatedReservations,
+          };
+        }),
 
       addOutboundNote: (note) =>
         set((state) => ({

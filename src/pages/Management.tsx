@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Edit2,
@@ -419,6 +419,36 @@ function ZoneModal({ isOpen, onClose, zone, onSave }: ZoneModalProps) {
     description: '',
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      if (zone) {
+        setFormData({
+          name: zone.name,
+          minTemp: zone.minTemp,
+          maxTemp: zone.maxTemp,
+          currentTemp: zone.currentTemp,
+          totalPallets: zone.totalPallets,
+          usedPallets: zone.usedPallets,
+          minLeaseDays: zone.minLeaseDays,
+          dailyRate: zone.dailyRate,
+          description: zone.description || '',
+        });
+      } else {
+        setFormData({
+          name: '',
+          minTemp: 0,
+          maxTemp: 10,
+          currentTemp: 5,
+          totalPallets: 100,
+          usedPallets: 0,
+          minLeaseDays: 7,
+          dailyRate: 15,
+          description: '',
+        });
+      }
+    }
+  }, [isOpen, zone]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -582,6 +612,35 @@ function ContractModal({
     endDate: '',
     leasedPallets: 0,
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      if (contract) {
+        setFormData({
+          zoneId: contract.zoneId,
+          tenantName: contract.tenantName,
+          contactInfo: contract.contactInfo,
+          contactPerson: contract.contactPerson,
+          startDate: contract.startDate,
+          endDate: contract.endDate,
+          leasedPallets: contract.leasedPallets,
+        });
+      } else {
+        const today = new Date();
+        const nextYear = new Date();
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+        setFormData({
+          zoneId: defaultZoneId || zones[0]?.id || '',
+          tenantName: '',
+          contactInfo: '',
+          contactPerson: '',
+          startDate: today.toISOString().split('T')[0],
+          endDate: nextYear.toISOString().split('T')[0],
+          leasedPallets: 10,
+        });
+      }
+    }
+  }, [isOpen, contract, defaultZoneId, zones]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
